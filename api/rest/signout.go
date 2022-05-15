@@ -2,24 +2,23 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/toluwase1/playstore/models"
 	"net/http"
+	"strconv"
 )
 
-func (h *Handler) SignIn(c *gin.Context) {
+func (h *Handler) SignOut(c *gin.Context) {
 	if h.db == nil {
 		return
 	}
-	var customer models.Customer
-	err := c.ShouldBindJSON(&customer)
+	p := c.Param("id")
+	id, err := strconv.Atoi(p)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	customer, err = h.db.SignInUser(customer)
+	err = h.db.SignOutUserById(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, customer)
 }
