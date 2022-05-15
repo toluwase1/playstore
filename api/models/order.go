@@ -1,12 +1,20 @@
 package models
 
-import "time"
+import (
+	"github.com/jinzhu/gorm"
+	"time"
+)
 
 type Order struct {
+	gorm.Model
 	Product
 	Customer
-	CustomerID   int       `json:"customer_id"`
-	ProductID    int       `json:"product_id"`
-	Price        float64   `json:"sell_price"`
-	PurchaseDate time.Time `json:"purchase_date"`
+	CustomerID   int       `gorm:"column:customer_id"`
+	ProductID    int       `gorm:"column:product_id"`
+	Price        float64   `gorm:"column:price" json:"sell_price"`
+	PurchaseDate time.Time `gorm:"column:purchase_date" json:"purchase_date"`
+}
+
+func (Order) TableName() string {
+	return "orders"
 }

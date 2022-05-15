@@ -1,8 +1,18 @@
 package models
 
+import "github.com/jinzhu/gorm"
+
 type Customer struct {
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Email     string `json:"email"`
-	LoggedIn  bool   `json:"loggedin"`
+	gorm.Model
+	Name      string  `json:"name"`
+	FirstName string  `gorm:"column:firstname" json:"firstname"`
+	LastName  string  `gorm:"column:lastname" json:"lastname"`
+	Email     string  `gorm:"column:email" json:"email"`
+	Pass      string  `json:"password"`
+	LoggedIn  bool    `gorm:"column:loggedin" json:"loggedin"`
+	Orders    []Order `json:"orders"`
+}
+
+func (Customer) TableName() string {
+	return "customers"
 }

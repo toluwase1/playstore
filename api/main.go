@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"github.com/toluwase1/playstore/rest"
