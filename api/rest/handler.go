@@ -22,7 +22,13 @@ type Handler struct {
 // NewHandler
 //To follow good design principles,
 //we need a constructor for Handler
-func NewHandler() (*Handler, error) {
-	//This creates a new pointer to the Handler object
-	return new(Handler), nil
+// we ensure that our constructor connects to our db
+func NewHandler() (HandlerInterface, error) {
+	db, err := dblayer.NewORM("mysql", "root:toluwase@/play-store")
+	if err != nil {
+		return nil, err
+	}
+	return &Handler{
+		db: db,
+	}, nil
 }

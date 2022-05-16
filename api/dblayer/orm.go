@@ -107,5 +107,24 @@ func (db *DBORM) GetCustomerOrdersByID(id int) (orders []models.Order, error err
 
 2. State how to Connect the two tables
 	ON orders.customer_id = customers.customer_id
-
 */
+
+//Add the order to the orders table
+func (db *DBORM) AddOrder(order models.Order) error {
+	return db.Create(&order).Error
+}
+
+//Get the id representing the credit card from the database
+func (db *DBORM) GetCreditCardCID(id int) (string, error) {
+	cusomterWithCCID := struct {
+		models.Customer
+		CCID string `gorm:"column:cc_customerid"`
+	}{}
+	return cusomterWithCCID.CCID, db.First(&cusomterWithCCID, id).Error
+}
+
+//Save the credit card information for the customer
+func (db *DBORM) SaveCreditCardForCustomer(id int, ccid string) error {
+	result := db.Table("customers").Where("id=?", id)
+	return result.Update("cc_customerid", ccid).Error
+}
