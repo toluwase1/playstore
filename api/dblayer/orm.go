@@ -1,10 +1,8 @@
 package dblayer
 
 import (
-	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/toluwase1/playstore/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type DBORM struct {
@@ -90,10 +88,6 @@ func (db *DBORM) SignOutUserById(id int) error {
 	return db.Table("Customers").Where(&customer).Update("loggedin", 0).Error
 }
 
-func abc() {
-
-}
-
 //GetCustomerOrdersByID
 //SELECT * FROM `orders` join customers on customers.id = customer_id join
 //products on products.id = product_id WHERE (customer_id='1')
@@ -115,25 +109,3 @@ func (db *DBORM) GetCustomerOrdersByID(id int) (orders []models.Order, error err
 	ON orders.customer_id = customers.customer_id
 
 */
-
-func hashPassword(s *string) error {
-	if s == nil {
-		return errors.New("Reference provided for hashing password is nil")
-	}
-	//convert password string to byte slice so that we can use it with the bcrypt package
-	sBytes := []byte(*s)
-	//Obtain hashed password via the GenerateFromPassword() method
-	hashedBytes, err := bcrypt.GenerateFromPassword(sBytes, bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	//update password string with the hashed version
-	*s = string(hashedBytes[:])
-	return nil
-}
-
-func checkPassword(existingHash, incomingPass string) bool {
-	//this method will return an error if the hash does not match the provided password string
-	return bcrypt.CompareHashAndPassword([]byte(existingHash),
-		[]byte(incomingPass)) == nil
-}
