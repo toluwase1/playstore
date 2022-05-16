@@ -1,6 +1,11 @@
 package dblayer
 
-import "github.com/toluwase1/playstore/models"
+import (
+	"errors"
+	"github.com/toluwase1/playstore/models"
+)
+
+var ErrINVALIDPASSWORD = errors.New("Invalid password")
 
 type DBLayer interface {
 	GetAllProducts() ([]models.Product, error)

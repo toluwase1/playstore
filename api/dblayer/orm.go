@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/toluwase1/playstore/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DBORM struct {
@@ -47,20 +48,29 @@ func (db *DBORM) GetProduct(id int) (product models.Product, error error) {
 }
 
 func (db *DBORM) AddUser(customer models.Customer) (models.Customer, error) {
-	//we will cover the hashpassword function later
 	hashPassword(&customer.Pass)
 	customer.LoggedIn = true
-	return customer, db.Create(&customer).Error
+	err := db.Create(&customer).Error
+	//password covered
+	customer.Pass = ""
+	return customer, err
 }
 
-func (db *DBORM) SignInUser(email, pass string) (customer models.Customer,
-	err error) {
-	//Verify the password, we'll cover this function later
-	if !checkPassword(pass) {
-		return customer, errors.New("Invalid password")
-	}
+func (db *DBORM) SignInUser(email, pass string) (customer models.Customer, err error) {
 	//Obtain a *gorm.DB object representing our customer's row
 	result := db.Table("Customers").Where(&models.Customer{Email: email})
+	//Retrieve the data for the customer with the passed email
+	err = result.First(&customer).Error
+	if err != nil {
+		return customer, err
+	}
+	//Compare the saved hashed password with the password provided by the user trying to sign in
+	if !checkPassword(customer.Pass, pass) {
+		//If failed, returns an error
+		return customer, ErrINVALIDPASSWORD
+	}
+	//set customer pass to empty because we don't need to share this information again
+	customer.Pass = ""
 	//update the loggedin field
 	err = result.Update("loggedin", 1).Error
 	if err != nil {
@@ -69,7 +79,6 @@ func (db *DBORM) SignInUser(email, pass string) (customer models.Customer,
 	//return the new customer row
 	return customer, result.Find(&customer).Error
 }
-
 func (db *DBORM) SignOutUserById(id int) error {
 	//Create a customer Go struct with the provided if
 	customer := models.Customer{
@@ -81,9 +90,50 @@ func (db *DBORM) SignOutUserById(id int) error {
 	return db.Table("Customers").Where(&customer).Update("loggedin", 0).Error
 }
 
+func abc() {
+
+}
+
+//GetCustomerOrdersByID
+//SELECT * FROM `orders` join customers on customers.id = customer_id join
+//products on products.id = product_id WHERE (customer_id='1')
 func (db *DBORM) GetCustomerOrdersByID(id int) (orders []models.Order, error error) {
+
 	return orders, db.Table("orders").Select("*").
 		Joins("join customers on customers.id = customer_id").
 		Joins("join products on products.id = product_id").
 		Where("customer_id=?", id).Scan(&orders).Error
+}
+
+/*
+1. Join the two tables
+	SELECT *
+	FROM orders (acts as left table)
+	INNER JOIN customers (acts as right table)
+
+2. State how to Connect the two tables
+	ON orders.customer_id = customers.customer_id
+
+*/
+
+func hashPassword(s *string) error {
+	if s == nil {
+		return errors.New("Reference provided for hashing password is nil")
+	}
+	//convert password string to byte slice so that we can use it with the bcrypt package
+	sBytes := []byte(*s)
+	//Obtain hashed password via the GenerateFromPassword() method
+	hashedBytes, err := bcrypt.GenerateFromPassword(sBytes, bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	//update password string with the hashed version
+	*s = string(hashedBytes[:])
+	return nil
+}
+
+func checkPassword(existingHash, incomingPass string) bool {
+	//this method will return an error if the hash does not match the provided password string
+	return bcrypt.CompareHashAndPassword([]byte(existingHash),
+		[]byte(incomingPass)) == nil
 }
